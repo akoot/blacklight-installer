@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
 }
+val filekitVersion = "0.12.0"
 
 kotlin {
     jvm()
@@ -22,6 +23,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(compose.materialIconsExtended)
             implementation("com.squareup.okhttp3:okhttp:5.3.0")
+            implementation("io.github.vinceglb:filekit-core:${filekitVersion}")
+            implementation("io.github.vinceglb:filekit-dialogs:${filekitVersion}")
+            implementation("io.github.vinceglb:filekit-dialogs-compose:${filekitVersion}")
+            implementation("io.github.vinceglb:filekit-coil:${filekitVersion}")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

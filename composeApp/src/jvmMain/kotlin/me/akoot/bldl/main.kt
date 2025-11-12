@@ -12,6 +12,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 fun main() = application {
+    //if (!isRunningAsAdmin()) relaunchAsAdmin()
     Window(
         onCloseRequest = ::exitApplication,
         title = "BlacklightInstaller",
@@ -23,6 +24,7 @@ fun main() = application {
 suspend fun download(
     url: String,
     dest: File,
+    updateLength: (Long) -> Unit,
     updateProgress: (Float) -> Unit
 ) = withContext(Dispatchers.IO) {
     val client = OkHttpClient()
@@ -34,6 +36,7 @@ suspend fun download(
         val body = response.body
 
         val contentLen = body.contentLength()
+        updateLength(contentLen)
         val input = body.byteStream()
         val output = dest.outputStream()
 
@@ -50,8 +53,7 @@ suspend fun download(
                     total += bytesRead
 
                     if (contentLen > 0) {
-                        val progress = total.toFloat() / contentLen.toFloat()
-                        updateProgress(progress)
+                        updateProgress(total / contentLen.toFloat())
                     }
                 }
             }
@@ -62,6 +64,7 @@ suspend fun download(
 suspend fun unzip(
     zipFile: File,
     dest: File,
+    updateLength: (Long) -> Unit,
     updateProgress: (Float) -> Unit
 ) = withContext(Dispatchers.IO) {
     if (!dest.exists()) dest.mkdirs()
@@ -71,6 +74,7 @@ suspend fun unzip(
 
     // First count total bytes for progress (not always perfect, but close enough)
     val totalBytes = zipFile.length()
+    updateLength(totalBytes)
     var processedBytes = 0L
 
     zis.use { zip ->
@@ -94,13 +98,38 @@ suspend fun unzip(
                         fos.write(buffer, 0, len)
 
                         processedBytes += len
-                        val progress = processedBytes.toFloat() / totalBytes.toFloat()
-                        updateProgress(progress)
+                        updateProgress(processedBytes / totalBytes.toFloat())
                     }
                 }
             }
 
             zip.closeEntry()
         }
+    }
+}
+
+fun relaunchAsAdmin() {
+    val cmd = arrayOf(
+        "powershell",
+        "-Command",
+        "Start-Process",
+        "\"${System.getProperty("java.class.path")}\"",
+        "-Verb", "runAs"
+    )
+    Runtime.getRuntime().exec(cmd)
+}
+
+fun isRunningAsAdmin(): Boolean {
+    return try {
+        val process = ProcessBuilder(
+            "powershell",
+            "-Command",
+            "([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
+        ).start()
+
+        val result = process.inputStream.bufferedReader().readText().trim()
+        result.equals("True", ignoreCase = true)
+    } catch (e: Exception) {
+        false
     }
 }
