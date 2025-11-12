@@ -37,7 +37,9 @@ import java.io.File
 @Preview
 fun App() {
     var expanded by remember { mutableStateOf(false) }
-    val menuItemData = mapOf("ddd-cloud.com (EU)" to "https://ddd-cloud.com/blrzip", "cloud.akoot.co (US)" to "https://akoot.xyz/dl/blr.zip", "archive.org (Slow AF)" to "")
+    val menuItemData = mapOf("ddd-cloud.com (EU)" to "https://getsamplefiles.com/download/zip/sample-1.zip", "cloud.akoot.co (US)" to
+            "https://akoot.xyz/dl/blr.zip"
+        , "archive.org (Slow AF)" to "")
     var selectedServer = menuItemData.keys.first()
     var currentProgress by remember { mutableFloatStateOf(0f) }
     var loading by remember { mutableStateOf(false) }
@@ -82,6 +84,7 @@ fun App() {
                                         currentProgress = it
                                     }
                                 }
+                                currentProgress = 1f
                                 buttonText = "Re-Install"
                                 loading = false // Reset loading when the coroutine finishes
                             }
