@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -5,6 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    id("com.gradleup.shadow") version "9.2.2"
 }
 val filekitVersion = "0.12.0"
 
@@ -49,4 +51,21 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+// Configure ShadowJar to create a portable JAR
+tasks.shadowJar {
+    archiveBaseName.set("BlacklightInstaller")
+    archiveClassifier.set("") // removes "-all" suffix
+    archiveVersion.set("") // no version number in name
+    manifest {
+        attributes["Main-Class"] = "me.akoot.bldl.MainKt"
+    }
+}
+
+// Optional shortcut task
+tasks.register("portableJar") {
+    dependsOn("shadowJar")
+    group = "build"
+    description = "Builds a portable, runnable JAR file."
 }

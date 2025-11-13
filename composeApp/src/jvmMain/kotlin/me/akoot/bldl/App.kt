@@ -33,17 +33,12 @@ import androidx.compose.ui.Modifier
 import blacklightinstaller.composeapp.generated.resources.Res
 import blacklightinstaller.composeapp.generated.resources.compose_multiplatform
 import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.openDirectoryPicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import java.awt.FileDialog
-import java.awt.Frame
 import java.io.File
-import javax.swing.JFileChooser
-import kotlin.math.roundToInt
 
 @Composable
 @Preview
@@ -60,7 +55,7 @@ fun App() {
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope() // Create a coroutine scope
     val zipFile = File(System.getenv("temp"), "blr.zip")
-    var installPath  by remember { mutableStateOf("C:\\Program Files (x86)") }
+    var installPath by remember { mutableStateOf("C:\\Program Files (x86)") }
     var buttonText = "Download"
     var installed by remember { mutableStateOf(false) }
     var size by remember { mutableLongStateOf(0) }
@@ -140,7 +135,7 @@ fun App() {
                                 scope.launch(Dispatchers.Main) {
                                     size = it
                                 }
-                                                                              }, {
+                            }, {
                                 scope.launch(Dispatchers.Main) {
                                     currentProgress = it
                                 }
@@ -153,7 +148,7 @@ fun App() {
                                 scope.launch(Dispatchers.Main) {
                                     size = it
                                 }
-                                                       }, {
+                            }, {
                                 scope.launch(Dispatchers.Main) {
                                     currentProgress = it
                                 }
@@ -169,14 +164,31 @@ fun App() {
                     LinearProgressIndicator(
                         progress = { currentProgress }
                     )
-                    Text("${((currentProgress * size) / 1000000).toInt()} / ${size / 1000000} MB (${String.format("%.2f", currentProgress * 100f)}%)")
+                    Text(
+                        "${((currentProgress * size) / 1000000).toInt()} / ${size / 1000000} MB (${
+                            String.format(
+                                "%.2f",
+                                currentProgress * 100f
+                            )
+                        }%)"
+                    )
                     Button(onClick = {
-                        val exeFile = File(installPath).resolve("blacklightretribution").resolve("Binaries").resolve("Win32").resolve("FoxGame-win32-Shipping.exe")
+                        val exeFile =
+                            File(installPath).resolve("blacklightretribution").resolve("Binaries")
+                                .resolve("Win32").resolve("FoxGame-win32-Shipping.exe")
                         println(exeFile.absolutePath)
-                        if(!exeFile.exists()) {
+                        if (!exeFile.exists()) {
                             return@Button
                         }
-                        Runtime.getRuntime().exec(arrayOf(exeFile.absolutePath, "-zcureurl=blrrevive.ddd-game.de", "-zcureport=80", "-presenceurl=blrrevive.ddd-game.de", "-presenceport=9004",))
+                        Runtime.getRuntime().exec(
+                            arrayOf(
+                                exeFile.absolutePath,
+                                "-zcureurl=blrrevive.ddd-game.de",
+                                "-zcureport=80",
+                                "-presenceurl=blrrevive.ddd-game.de",
+                                "-presenceport=9004",
+                            )
+                        )
                     }, enabled = installed) {
                         Text("Launch")
                     }
