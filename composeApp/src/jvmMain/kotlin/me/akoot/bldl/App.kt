@@ -141,9 +141,9 @@ fun App() {
                                 scope.launch(Dispatchers.Main) {
                                     size = it
                                 }
-                            }, {
+                            }, { progress, file ->
                                 scope.launch(Dispatchers.Main) {
-                                    currentProgress = it
+                                    currentProgress = progress
                                 }
                             })
                             currentProgress = 1f
@@ -166,22 +166,13 @@ fun App() {
                         }%)"
                     )
                     Button(onClick = {
-                        val exeFile =
-                            File(installPath).resolve("blacklightretribution").resolve("Binaries")
-                                .resolve("Win32").resolve("FoxGame-win32-Shipping.exe")
-                        println(exeFile.absolutePath)
-                        if (!exeFile.exists()) {
-                            return@Button
+                        scope.launch(Dispatchers.IO) {
+                            // loading thing
+                            launchGame(File(installPath)) {
+                                println("exit code: $it")
+                                //loaded
+                            }
                         }
-                        Runtime.getRuntime().exec(
-                            arrayOf(
-                                exeFile.absolutePath,
-                                "-zcureurl=blrrevive.ddd-game.de",
-                                "-zcureport=80",
-                                "-presenceurl=blrrevive.ddd-game.de",
-                                "-presenceport=9004",
-                            )
-                        )
                     }, enabled = installed) {
                         Text("Launch")
                     }

@@ -17,8 +17,17 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "BlacklightInstaller",
     ) {
-        App()
+        Settings()
     }
+}
+
+object Defaults {
+    const val SHA1 = "1C4E002FBB1F106387038E3848F56E21E14E766F"
+    const val INSTALL_LOCATION = "C:\\Program Files (x86)"
+    const val ZCURE_SERVER = "blrrevive.ddd-game.de"
+    const val PRESENCE_SERVER = "blrrevive.ddd-game.de"
+    const val ZCURE_PORT = 80
+    const val PRESENCE_PORT = 9004
 }
 
 suspend fun download(
@@ -65,7 +74,7 @@ suspend fun unzip(
     zipFile: File,
     dest: File,
     updateLength: (Long) -> Unit,
-    updateProgress: (Float) -> Unit
+    updateProgress: (Float, String) -> Unit
 ) = withContext(Dispatchers.IO) {
     if (!dest.exists()) dest.mkdirs()
 
@@ -98,7 +107,7 @@ suspend fun unzip(
                         fos.write(buffer, 0, len)
 
                         processedBytes += len
-                        updateProgress(processedBytes / totalBytes.toFloat())
+                        updateProgress(processedBytes / totalBytes.toFloat(), newFile.name)
                     }
                 }
             }
@@ -108,28 +117,20 @@ suspend fun unzip(
     }
 }
 
-fun relaunchAsAdmin() {
-    val cmd = arrayOf(
-        "powershell",
-        "-Command",
-        "Start-Process",
-        "\"${System.getProperty("java.class.path")}\"",
-        "-Verb", "runAs"
-    )
-    Runtime.getRuntime().exec(cmd)
-}
-
-fun isRunningAsAdmin(): Boolean {
-    return try {
-        val process = ProcessBuilder(
-            "powershell",
-            "-Command",
-            "([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
-        ).start()
-
-        val result = process.inputStream.bufferedReader().readText().trim()
-        result.equals("True", ignoreCase = true)
-    } catch (e: Exception) {
-        false
+suspend fun launchGame(installLocation: File, zcureServer: String = "blrrevive.ddd-game.de", presenceServer: String = zcureServer, zcurePort: Int = 80, presencePort: Int = 9004, onExit: (Int) -> Unit) = withContext(Dispatchers.IO) {
+    val exeFile = installLocation.resolve("blacklightretribution\\Binaries\\Win32\\FoxGame-win32-Shipping.exe")
+    println("exe: ${exeFile.absolutePath}")
+    if (!exeFile.exists()) {
+        onExit(-1)
+        return@withContext
     }
+    onExit(Runtime.getRuntime().exec(
+        arrayOf(
+            exeFile.absolutePath,
+            "-zcureurl=$zcureServer",
+            "-zcureport=$zcurePort",
+            "-presenceurl=$presenceServer",
+            "-presenceport=$presencePort",
+        )
+    ).exitValue())
 }
