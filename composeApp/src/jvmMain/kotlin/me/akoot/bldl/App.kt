@@ -1,7 +1,6 @@
 package me.akoot.bldl
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,13 +29,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import blacklightinstaller.composeapp.generated.resources.Res
-import blacklightinstaller.composeapp.generated.resources.compose_multiplatform
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openDirectoryPicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import java.io.File
 
@@ -73,13 +69,10 @@ fun App() {
                 Text("Click me!")
             }
             AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
                     Row(modifier = Modifier.safeContentPadding()) {
                         Text("Provider")
                         Text(selectedServer)
