@@ -1,182 +1,152 @@
 package me.akoot.bldl
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CheckCircleOutline
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.openDirectoryPicker
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import java.io.File
 
 @Composable
 @Preview
 fun App() {
-    var expandedServer by remember { mutableStateOf(false) }
-    val menuItemData = mapOf(
-        "ddd-cloud.com (EU)" to "https://getsamplefiles.com/download/zip/sample-3.zip",
-        "cloud.akoot.co (US)" to
-                "https://akoot.xyz/dl/blr.zip",
-        "archive.org (Slow AF)" to ""
-    )
-    var selectedServer = menuItemData.keys.first()
-    var currentProgress by remember { mutableFloatStateOf(0f) }
-    var loading by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope() // Create a coroutine scope
-    val zipFile = File(System.getenv("temp"), "blr.zip")
-    var installPath by remember { mutableStateOf("C:\\Program Files (x86)") }
-    var buttonText = "Download"
+    val scope = rememberCoroutineScope()
+
+    var progress by remember { mutableFloatStateOf(0f) }
+
+    var buttonText by remember { mutableStateOf("Install") }
+
+    var working by remember { mutableStateOf(false) }
     var installed by remember { mutableStateOf(false) }
-    var size by remember { mutableLongStateOf(0) }
-    var downloaded by remember { mutableStateOf(false) }
+
     MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
-            }
-            AnimatedVisibility(showContent) {
+        Box {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .safeContentPadding()
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = verticalPadding,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Row(modifier = Modifier.safeContentPadding()) {
-                        Text("Provider")
-                        Text(selectedServer)
-                        IconButton(onClick = { expandedServer = !expandedServer }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
-
-                        DropdownMenu(
-                            expanded = expandedServer,
-                            onDismissRequest = { expandedServer = false }
-                        ) {
-                            menuItemData.keys.forEach { option ->
-                                DropdownMenuItem(
-                                    text = { Text(option) },
-                                    onClick = {
-                                        expandedServer = !expandedServer
-                                        selectedServer = option
-                                    },
-                                    trailingIcon = {
-                                        Icon(
-                                            if (option == selectedServer) Icons.Default.CheckCircle else Icons.Default.CheckCircleOutline,
-                                            contentDescription = ""
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    Row(modifier = Modifier.safeContentPadding()) {
-                        Text("Install Location")
-                        Text(installPath)
-                        IconButton(onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                val directory =
-                                    FileKit.openDirectoryPicker("Select folder to install Blacklight: Retribution")
-                                scope.launch(Dispatchers.Main) {
-                                    println(directory)
-                                    directory?.file?.absolutePath?.let { installPath = it }
-                                }
-                            }
-                        }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
-                    }
                     Button(onClick = {
-                        if (installed) {
-                            return@Button
-                        }
-                        loading = true
+                        working = true
                         scope.launch(Dispatchers.IO) {
-                            buttonText = "Downloading..."
-                            download(menuItemData[selectedServer]!!, zipFile, {
-                                scope.launch(Dispatchers.Main) {
-                                    size = it
+                            if (installed || !zipFile.exists()) {
+                                buttonText = "Downloading..."
+                                download {
+                                    scope.launch { progress = it }
                                 }
-                            }, {
-                                scope.launch(Dispatchers.Main) {
-                                    currentProgress = it
+                                if (!zipFile.exists()) {
+                                    println("Download failed!")
+                                    buttonText = "Install"
+                                    working = false
+                                    progress = 0f
+                                    installed = false
+                                    return@launch
                                 }
-                            })
-                            downloaded = true
-                            buttonText = "Installing..."
-                            val installDir = File(installPath)
-                            installDir.mkdirs()
-                            unzip(zipFile, installDir, {
-                                scope.launch(Dispatchers.Main) {
-                                    size = it
+                            }
+                            if (Preferences.checkSha1) {
+                                buttonText = "Validating..."
+                                val sha1 = computeSha1(zipFile) {
+                                    scope.launch { progress = it }
                                 }
-                            }, { progress, file ->
-                                scope.launch(Dispatchers.Main) {
-                                    currentProgress = progress
+                                if (sha1 != Preferences.sha1) {
+                                    println("SHA1 does not match!")
+                                    println("Expected:  ${Preferences.sha1}")
+                                    println("Actual:    $sha1")
+                                    buttonText = "Install"
+                                    working = false
+                                    progress = 0f
+                                    installed = false
+                                    return@launch
                                 }
-                            })
-                            currentProgress = 1f
+                            }
+                            if (installed || !exeFile.exists()) {
+                                buttonText = "Installing..."
+                                unzip {
+                                    scope.launch { progress = it }
+                                }
+                                if (!exeFile.exists()) {
+                                    println("exe file not found!")
+                                    buttonText = "Install"
+                                    working = false
+                                    progress = 0f
+                                    installed = false
+                                    return@launch
+                                }
+                            }
+                            if (Preferences.createShortcuts) {
+                                desktopShortcut.delete()
+                                startMenuShortcut.delete()
+                                createWindowsShortcut(desktopShortcut)
+                                createWindowsShortcut(startMenuShortcut)
+                            }
                             buttonText = "Re-Install"
-                            loading = false // Reset loading when the coroutine finishes
+                            progress = 1f
+                            working = false
                             installed = true
                         }
-                    }, enabled = !loading) {
+                    }, enabled = !working, modifier = verticalPadding) {
                         Text(buttonText)
                     }
                     LinearProgressIndicator(
-                        progress = { currentProgress }
+                        progress = { progress },
+                        modifier = verticalPadding
                     )
-                    Text(
-                        "${((currentProgress * size) / 1000000).toInt()} / ${size / 1000000} MB (${
-                            String.format(
-                                "%.2f",
-                                currentProgress * 100f
-                            )
-                        }%)"
-                    )
-                    Button(onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            // loading thing
-                            launchGame(File(installPath)) {
-                                println("exit code: $it")
-                                //loaded
+                    Text("${String.format("%.1f", progress * 100f)}%")
+                    ElevatedButton(
+                        onClick = {
+                            scope.launch(Dispatchers.IO) {
+                                // loading thing
+                                launchGame {
+                                    println("exit code: $it")
+                                    //loaded
+                                }
                             }
-                        }
-                    }, enabled = installed) {
+                        },
+                        enabled = !working && installed,
+                        modifier = verticalPadding.alpha(if (!working && installed) 1f else 0f)
+                    ) {
                         Text("Launch")
                     }
                 }
+            }
+            SmallFloatingActionButton(onClick = {
+                // go to settings
+            }, Modifier.background(MaterialTheme.colorScheme.secondaryContainer)) {
+                Icon(Icons.Default.Settings, "Settings")
             }
         }
     }
