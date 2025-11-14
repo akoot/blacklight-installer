@@ -1,9 +1,6 @@
 package me.akoot.bldl
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -53,13 +50,14 @@ val padding = 2.dp
 val verticalPadding = Modifier.padding(vertical = padding)
 val horizontalPadding = Modifier.padding(horizontal = padding)
 
+const val VERSION = "1.0"
+
 fun main() = application {
-    //if (!isRunningAsAdmin()) relaunchAsAdmin()
     Window(
         onCloseRequest = ::exitApplication,
-        title = "BlacklightInstaller",
+        title = "Blacklight Installer",
     ) {
-        Settings()
+        App()
     }
 }
 
@@ -138,22 +136,26 @@ suspend fun unzip(updateProgress: (Float) -> Unit) = withContext(Dispatchers.IO)
     }
 }
 
-val arguments get() = arrayOf(
-    exeFile.absolutePath,
-    "-zcureurl=${Preferences.zcureServer}",
-    "-zcureport=${Preferences.zcurePort}",
-    "-presenceurl=${Preferences.presenceServer}",
-    "-presenceport=${Preferences.presencePort}",
-)
+val arguments
+    get() = arrayOf(
+        exeFile.absolutePath,
+        "-zcureurl=${Preferences.zcureServer}",
+        "-zcureport=${Preferences.zcurePort}",
+        "-presenceurl=${Preferences.presenceServer}",
+        "-presenceport=${Preferences.presencePort}",
+    )
+
 suspend fun launchGame(onExit: (Int) -> Unit) {
-    println("exe: ${exeFile.absolutePath} (${if(exeFile.exists()) "exists" else "does not exist"})")
+    println("exe: ${exeFile.absolutePath} (${if (exeFile.exists()) "exists" else "does not exist"})")
     if (!exeFile.exists()) {
         onExit(-1)
         return
     }
-    onExit(Runtime.getRuntime().exec(
-        arguments
-    ).exitValue())
+    onExit(
+        Runtime.getRuntime().exec(
+            arguments
+        ).exitValue()
+    )
 }
 
 suspend fun computeSha1(
@@ -179,8 +181,10 @@ suspend fun computeSha1(
     return digest.digest().joinToString("") { "%02x".format(it) }.uppercase()
 }
 
-val desktopShortcut = File("${System.getProperty("user.home")}\\Desktop\\Blacklight Retribution.lnk")
-val startMenuShortcut = File("${System.getenv("APPDATA")}\\Microsoft\\Windows\\Start Menu\\Programs\\Blacklight Retribution.lnk")
+val desktopShortcut =
+    File("${System.getProperty("user.home")}\\Desktop\\Blacklight Retribution.lnk")
+val startMenuShortcut =
+    File("${System.getenv("APPDATA")}\\Microsoft\\Windows\\Start Menu\\Programs\\Blacklight Retribution.lnk")
 
 fun createWindowsShortcut(shortcut: File) {
     val workingDirectory = exeFile.parentFile.absolutePath

@@ -18,14 +18,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -67,8 +65,7 @@ val sha1Validator = InputTransformation.maxLength(40).then {
 
 @Composable
 @Preview
-fun Settings() {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Settings) }
+fun Settings(onGoToHome: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     var checkSha1 by remember { mutableStateOf(true) }
@@ -89,7 +86,10 @@ fun Settings() {
     var expandedServerSelector by remember { mutableStateOf(false) }
 
     MaterialTheme {
-        Box {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.primaryContainer)
@@ -141,7 +141,8 @@ fun Settings() {
                             sha1,
                             readOnly = !checkSha1,
                             inputTransformation = sha1Validator,
-                            modifier = Modifier.alpha(if (checkSha1) 1f else 0.25f).background(MaterialTheme.colorScheme.tertiaryContainer)
+                            modifier = Modifier.alpha(if (checkSha1) 1f else 0.25f)
+                                .background(MaterialTheme.colorScheme.tertiaryContainer)
                         )
                         IconButton(
                             onClick = {
@@ -262,19 +263,24 @@ fun Settings() {
                     }
                 }
             }
-        }
-        SmallFloatingActionButton(onClick = {
-            Preferences.installationSource = selectedServer
-            Preferences.installLocation = installLocation.text.toString()
-            Preferences.createShortcuts = createShortcuts
-            Preferences.checkSha1 = checkSha1
-            Preferences.sha1 = sha1.text.toString()
-            Preferences.presenceServer = presenceServer.text.toString()
-            Preferences.presencePort = presencePort.text.toString().toInt()
-            Preferences.zcureServer = zcureServer.text.toString()
-            Preferences.zcurePort = zcurePort.text.toString().toInt()
-        }) {
-            Icon(Icons.Default.ArrowBackIosNew, "Go Back")
+            IconButton(onClick = {
+                Preferences.installationSource =
+                    installationSources[selectedServer] ?: installationSources.values.first()
+                Preferences.installLocation = installLocation.text.toString()
+                Preferences.createShortcuts = createShortcuts
+                Preferences.checkSha1 = checkSha1
+                Preferences.sha1 = sha1.text.toString()
+                Preferences.presenceServer = presenceServer.text.toString()
+                Preferences.presencePort = presencePort.text.toString().toInt()
+                Preferences.zcureServer = zcureServer.text.toString()
+                Preferences.zcurePort = zcurePort.text.toString().toInt()
+                onGoToHome()
+            }) {
+                Icon(Icons.Default.ArrowBackIosNew, "Go Back")
+            }
+            TextButton(onClick = {}, modifier = Modifier.align(Alignment.BottomEnd)) {
+                Text("v$VERSION")
+            }
         }
     }
 }
