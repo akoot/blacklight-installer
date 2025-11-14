@@ -47,25 +47,18 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "me.akoot.bldl"
-            packageVersion = "1.0.0"
+            packageName = "BlacklightInstaller"
+            packageVersion = "1.1.0"
         }
     }
 }
 
-// Configure ShadowJar to create a portable JAR
-tasks.shadowJar {
-    archiveBaseName.set("BlacklightInstaller")
-    archiveClassifier.set("") // removes "-all" suffix
-    archiveVersion.set("") // no version number in name
-    manifest {
-        attributes["Main-Class"] = "me.akoot.bldl.MainKt"
-    }
-}
+tasks.register<Exec>("createExeWithAdminPrompt") {
+    dependsOn("createDistributable")
 
-// Optional shortcut task
-tasks.register("portableJar") {
-    dependsOn("shadowJar")
-    group = "build"
-    description = "Builds a portable, runnable JAR file."
+    commandLine(
+        "mt.exe",
+        "-manifest", "src/jvmMain/resources/elevate.manifest",
+        "-outputresource:build/compose/binaries/main/app/BlacklightInstaller/BlacklightInstaller.exe;#1"
+    )
 }

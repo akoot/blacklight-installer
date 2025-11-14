@@ -120,7 +120,7 @@ fun Home(onGoToSettings: () -> Unit) {
                         progress = { progress },
                         modifier = verticalPadding
                     )
-                    Text("${String.format("%.1f", progress * 100f)}%")
+                    Text(if(progress <= 1f) "${String.format("%.1f", progress * 100f)}%" else "Soon™...")
                     ElevatedButton(
                         onClick = {
                             scope.launch(Dispatchers.IO) {

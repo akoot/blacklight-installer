@@ -16,6 +16,7 @@ import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.system.exitProcess
 
 object Defaults {
     const val SHA1 = "B656B97DAB9A2ADA403D37556562D98ADD815CC9"
@@ -50,13 +51,16 @@ val padding = 2.dp
 val verticalPadding = Modifier.padding(vertical = padding)
 val horizontalPadding = Modifier.padding(horizontal = padding)
 
-const val VERSION = "1.0"
+const val VERSION = "1.1.0"
 
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "Blacklight Installer",
     ) {
+        if(!isRunningAsAdmin()) {
+            error("Please run this app as an administrator!")
+        }
         App()
     }
 }
@@ -214,4 +218,19 @@ fun createWindowsShortcut(shortcut: File) {
         .start()
 
     process.waitFor()
+}
+
+fun isRunningAsAdmin(): Boolean {
+    return try {
+        val process = ProcessBuilder(
+            "powershell",
+            "-Command",
+            "([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
+        ).start()
+
+        val result = process.inputStream.bufferedReader().readText().trim()
+        result.equals("True", ignoreCase = true)
+    } catch (e: Exception) {
+        false
+    }
 }
